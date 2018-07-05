@@ -465,6 +465,9 @@ flags.DEFINE_string('result_storage', None,
                     'in cbuild datastore (note: this option requires special '
                     'permissions and meant to be used from cbuilds).')
 
+flags.DEFINE_string('metadata_log', None,
+                    'Dump metadata to file.')
+
 
 platforms_util.define_platform_params()
 
@@ -613,6 +616,7 @@ def benchmark_one_step(sess,
                        trace_filename,
                        partitioned_graph_file_prefix,
                        profiler,
+                       metadata_log,
                        image_producer,
                        params,
                        summary_op=None,
@@ -662,6 +666,9 @@ def benchmark_one_step(sess,
   if need_options_and_metadata:
     if should_profile:
       profiler.add_step(step, run_metadata)
+      if metadata_log:
+        with open(metadata_log, 'a') as out:
+          out.write(str(run_metadata))
     if trace_filename and step == -2:
       log_fn('Dumping trace to %s' % trace_filename)
       trace_dir = os.path.dirname(trace_filename)
@@ -1583,6 +1590,7 @@ class BenchmarkCNN(object):
           sess = tf_debug.TensorBoardDebugWrapperSession(sess,
                                                          self.params.debugger)
       profiler = tf.profiler.Profiler() if self.params.tfprof_file else None
+      metadata_log = self.params.metadata_log
       loop_start_time = time.time()
       while not done_fn():
         if local_step == 0:
@@ -1610,7 +1618,7 @@ class BenchmarkCNN(object):
             self.batch_size * (self.num_workers
                                if self.single_session else 1), step_train_times,
             self.trace_filename, self.params.partitioned_graph_file_prefix,
-            profiler, image_producer, self.params, fetch_summary)
+            profiler, metadata_log, image_producer, self.params, fetch_summary)
         if summary_str is not None and is_chief:
           sv.summary_computed(sess, summary_str)
         local_step += 1
