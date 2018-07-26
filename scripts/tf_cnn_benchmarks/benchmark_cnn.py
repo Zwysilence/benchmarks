@@ -54,6 +54,8 @@ from cnn_util import log_fn
 from models import model_config
 from platforms import util as platforms_util
 
+import mem_util
+
 
 _DEFAULT_NUM_BATCHES = 100
 
@@ -468,6 +470,8 @@ flags.DEFINE_string('result_storage', None,
 flags.DEFINE_string('metadata_log', None,
                     'Dump metadata to file.')
 
+# flags.DEFINE_boolean("")                    
+
 
 platforms_util.define_platform_params()
 
@@ -664,6 +668,8 @@ def benchmark_one_step(sess,
           LOSS_AND_ACCURACY_DIGITS_TO_SHOW, results['top_5_accuracy'])
     log_fn(log_str)
   if need_options_and_metadata:
+    log_fn('Peak memory usage is ')
+    log_fn(mem_util.peak_memory(run_metadata)["/gpu:0"])
     if should_profile:
       profiler.add_step(step, run_metadata)
       if metadata_log:
