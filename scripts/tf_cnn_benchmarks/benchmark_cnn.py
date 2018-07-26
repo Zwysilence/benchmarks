@@ -668,8 +668,13 @@ def benchmark_one_step(sess,
           LOSS_AND_ACCURACY_DIGITS_TO_SHOW, results['top_5_accuracy'])
     log_fn(log_str)
   if need_options_and_metadata:
-    log_fn('Peak memory usage is ')
-    log_fn(mem_util.peak_memory(run_metadata)["/gpu:0"])
+    if step == _NUM_STEPS_TO_PROFILE - 1:
+      GigaConv = 1 << 30
+      peak_memory_usage = float(mem_util.peak_memory(run_metadata)["/gpu:0"]) / GigaConv
+      log_str = 'Peak memory usage is %f GB' % peak_memory_usage
+      log_fn(log_str)
+      # log_fn('Peak memory usage is ')
+      # log_fn(mem_util.peak_memory(run_metadata)["/gpu:0"])
     if should_profile:
       profiler.add_step(step, run_metadata)
       if metadata_log:
