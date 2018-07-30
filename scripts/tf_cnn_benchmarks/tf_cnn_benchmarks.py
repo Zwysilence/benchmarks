@@ -20,6 +20,13 @@ See the README for more information.
 
 from __future__ import print_function
 
+# Set the level of logging
+# import os
+# import logging
+# os.environ['TF_CPP_MIN_LOG_LEVEL'] = '0'
+# os.environ['TF_CPP_MIN_VLOG_LEVEL'] = '3'
+# logging.getLogger("tensorflow").setLevel(logging.WARNING)
+
 from absl import app
 from absl import flags as absl_flags
 import tensorflow as tf
@@ -28,6 +35,9 @@ import benchmark_cnn
 import cnn_util
 import flags
 from cnn_util import log_fn
+
+# Set the level of logging
+# tf.logging.set_verbosity(tf.logging.DEBUG)
 
 
 flags.define_flags()

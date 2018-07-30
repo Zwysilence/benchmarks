@@ -303,6 +303,8 @@ flags.DEFINE_boolean('distort_color_in_yiq', True,
                      'Distort color of input images in YIQ space.')
 flags.DEFINE_boolean('enable_layout_optimizer', False,
                      'whether to enable layout optimizer')
+flags.DEFINE_string('memory_optimization', None,
+                    'the memory optimization_option')
 flags.DEFINE_string('rewriter_config', None,
                     'Config for graph optimizers, described as a '
                     'RewriterConfig proto buffer.')
@@ -470,7 +472,7 @@ flags.DEFINE_string('result_storage', None,
 flags.DEFINE_string('metadata_log', None,
                     'Dump metadata to file.')
 
-# flags.DEFINE_boolean("")                    
+# flags.DEFINE_boolean("")
 
 
 platforms_util.define_platform_params()
@@ -578,6 +580,24 @@ def create_config_proto(params):
   if params.enable_layout_optimizer:
     config.graph_options.rewrite_options.layout_optimizer = (
         rewriter_config_pb2.RewriterConfig.ON)
+  if not params.memory_optimization:
+    config.graph_options.rewrite_options.memory_optimization = (
+        rewriter_config_pb2.RewriterConfig.DEFAULT_MEM_OPT)
+  if params.memory_optimization == "SWAPPING_HEURISTICS":
+    config.graph_options.rewrite_options.memory_optimization = (
+        rewriter_config_pb2.RewriterConfig.SWAPPING_HEURISTICS)
+  if params.memory_optimization == "RECOMPUTATION_HEURISTICS":
+    config.graph_options.rewrite_options.memory_optimization = (
+        rewriter_config_pb2.RewriterConfig.RECOMPUTATION_HEURISTICS)
+  if params.memory_optimization == "SCHEDULING_HEURISTICS":
+    config.graph_options.rewrite_options.memory_optimization = (
+        rewriter_config_pb2.RewriterConfig.SCHEDULING_HEURISTICS)
+  if params.memory_optimization == "HEURISTICS":
+    config.graph_options.rewrite_options.memory_optimization = (
+        rewriter_config_pb2.RewriterConfig.HEURISTICS)
+  if params.memory_optimization == "NO_MEM_OPT":
+    config.graph_options.rewrite_options.memory_optimization = (
+        rewriter_config_pb2.RewriterConfig.NO_MEM_OPT) 
   if params.rewriter_config:
     rewriter_config = rewriter_config_pb2.RewriterConfig()
     text_format.Merge(params.rewriter_config, rewriter_config)
