@@ -1,1 +1,1 @@
-TF_CPP_MIN_VLOG_LEVEL=3 CUDA_VISIBLE_DEVICES=$1 python ../tf_cnn_benchmarks.py --num_gpus=$2 --batch_size=$3 --num_batches=$4 --model=$5 --variable_update=parameter_server --all_reduce_spec=pscpu --tfprof_file="local_prof.pb" --memory_optimization="SWAPPING_HEURISTICS" &>test.log #--metadata_log=run_metadata
+CUDA_VISIBLE_DEVICES=$1 python ../tf_cnn_benchmarks.py --num_gpus=$2 --batch_size=$3 --num_batches=$4 --model=$5 --variable_update=parameter_server --all_reduce_spec=pscpu  --memory_optimization=$6 &>$7 #--tfprof_file="local_prof.pb" --metadata_log=run_metadata

@@ -581,21 +581,27 @@ def create_config_proto(params):
     config.graph_options.rewrite_options.layout_optimizer = (
         rewriter_config_pb2.RewriterConfig.ON)
   if not params.memory_optimization:
+    print("[benchmark_cnn]: Use DEFAULT_MEM_OPT")
     config.graph_options.rewrite_options.memory_optimization = (
         rewriter_config_pb2.RewriterConfig.DEFAULT_MEM_OPT)
   if params.memory_optimization == "SWAPPING_HEURISTICS":
+    print("[benchmark_cnn]: Use SWAPPING_HEURISTICS")
     config.graph_options.rewrite_options.memory_optimization = (
         rewriter_config_pb2.RewriterConfig.SWAPPING_HEURISTICS)
   if params.memory_optimization == "RECOMPUTATION_HEURISTICS":
+    print("[benchmark_cnn]: Use RECOMPUTATION_HEURISTICS")
     config.graph_options.rewrite_options.memory_optimization = (
         rewriter_config_pb2.RewriterConfig.RECOMPUTATION_HEURISTICS)
   if params.memory_optimization == "SCHEDULING_HEURISTICS":
+    print("[benchmark_cnn]: Use SCHEDULING_HEURISTICS")
     config.graph_options.rewrite_options.memory_optimization = (
         rewriter_config_pb2.RewriterConfig.SCHEDULING_HEURISTICS)
   if params.memory_optimization == "HEURISTICS":
+    print("[benchmark_cnn]: Use HEURISTICS")
     config.graph_options.rewrite_options.memory_optimization = (
         rewriter_config_pb2.RewriterConfig.HEURISTICS)
   if params.memory_optimization == "NO_MEM_OPT":
+    print("[benchmark_cnn]: Use NO_MEM_OPT")
     config.graph_options.rewrite_options.memory_optimization = (
         rewriter_config_pb2.RewriterConfig.NO_MEM_OPT) 
   if params.rewriter_config:
