@@ -2283,6 +2283,7 @@ class BenchmarkCNN(object):
         # this reduction in fp16.
         fp32_params = (tf.cast(p, tf.float32) for p in params)
       total_loss = base_loss
+      # total_loss = tf.Print(total_loss, [total_loss], message="Loss = ")
       if rel_device_num == len(self.devices) - 1:
         # We compute the L2 loss for only one device instead of all of them,
         # because the L2 loss for each device is the same. To adjust for this,

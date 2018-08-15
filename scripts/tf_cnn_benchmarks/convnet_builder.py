@@ -172,6 +172,12 @@ class ConvNetBuilder(object):
                                  kernel_size=[k_height, k_width],
                                  strides=[d_height, d_width], padding=mode,
                                  kernel_initializer=kernel_initializer)
+        # Add for tf.Print()
+        _num = 1
+        for i in conv.shape.as_list():
+          _num = _num * int(i)
+        if self.counts['conv'] == 1:
+          conv = tf.Print(conv, [conv], message="conv%d=" % self.counts['conv'], summarize=_num)
       else:  # Special padding mode for ResNet models
         if d_height == 1 and d_width == 1:
           conv = self._conv2d_impl(input_layer, num_channels_in,
@@ -179,6 +185,12 @@ class ConvNetBuilder(object):
                                    kernel_size=[k_height, k_width],
                                    strides=[d_height, d_width], padding='SAME',
                                    kernel_initializer=kernel_initializer)
+          # Add for tf.Print()
+          _num = 1
+          for i in conv.shape.as_list():
+            _num = _num * int(i)
+          if self.counts['conv'] == 1:
+            conv = tf.Print(conv, [conv], message="conv%d=" % self.counts['conv'], summarize=_num)
         else:
           rate = 1  # Unused (for 'a trous' convolutions)
           kernel_height_effective = k_height + (k_height - 1) * (rate - 1)
@@ -197,6 +209,12 @@ class ConvNetBuilder(object):
                                    kernel_size=[k_height, k_width],
                                    strides=[d_height, d_width], padding='VALID',
                                    kernel_initializer=kernel_initializer)
+          # Add for tf.Print()
+          _num = 1
+          for i in conv.shape.as_list():
+            _num = _num * int(i)
+          if self.counts['conv'] == 1:
+            conv = tf.Print(conv, [conv], message="conv%d=" % self.counts['conv'], summarize=_num)
       if use_batch_norm is None:
         use_batch_norm = self.use_batch_norm
       if not use_batch_norm:
