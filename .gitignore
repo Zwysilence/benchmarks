@@ -1,2 +1,3 @@
 .vscode/
 *.pyc
+scripts/tf_cnn_benchmarks/scripts/mem_log*/
