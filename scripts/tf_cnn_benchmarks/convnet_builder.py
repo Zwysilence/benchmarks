@@ -57,15 +57,16 @@ class ConvNetBuilder(object):
 
     # Add for tf.Print() params
     self._max_print = 100
+    self.limit_print = False
     self.first_n = -1
 
     # Add for record which tensor value
     self.record_conv = True
-    self.record_pool = True
-    self.record_affine = True
-    self.record_dropout = True
-    self.record_batchnorm = True
-    self.record_lrn = True
+    self.record_pool = False
+    self.record_affine = False
+    self.record_dropout = False
+    self.record_batchnorm = False
+    self.record_lrn = False
 
     # Add for record all layer's or the first of each layer
     self.record_all = False
@@ -217,7 +218,8 @@ class ConvNetBuilder(object):
         _num = 1
         for i in conv.shape.as_list():
           _num = _num * int(i)
-        _num = min(_num, self._max_print)
+        if self.limit_print:
+          _num = min(_num, self._max_print)
         if self.record_all:
           conv = tf.Print(conv, [conv], message="conv%d=" % self.counts['conv'], first_n=self.first_n, summarize=_num)
         else:
@@ -289,7 +291,8 @@ class ConvNetBuilder(object):
       _num = 1
       for i in pool.shape.as_list():
         _num = _num * int(i)
-      _num = min(_num, self._max_print)
+      if self.limit_print:
+        _num = min(_num, self._max_print)
       if self.record_all:
         pool = tf.Print(pool, [pool], message="%s%d=" % (pool_name, self.counts[pool_name]), first_n=self.first_n, summarize=_num)
       else:
@@ -360,7 +363,8 @@ class ConvNetBuilder(object):
         _num = 1
         for i in logits.shape.as_list():
           _num = _num * int(i)
-        _num = min(_num, self._max_print)
+        if self.limit_print:
+          _num = min(_num, self._max_print)
         if self.record_all:
           logits = tf.Print(logits, [logits], message="affine%d=" % self.counts['affine'], first_n=self.first_n, summarize=_num)
         else:
@@ -442,7 +446,8 @@ class ConvNetBuilder(object):
         _num = 1
         for i in dropout.shape.as_list():
           _num = _num * int(i)
-        _num = min(_num, self._max_print)
+        if self.limit_print:
+          _num = min(_num, self._max_print)
         if self.record_all:
           dropout = tf.Print(dropout, [dropout], message="dropout%d=" % self.counts['dropout'], first_n=self.first_n, summarize=_num)
         else:
@@ -522,7 +527,8 @@ class ConvNetBuilder(object):
         _num = 1
         for i in bn.shape.as_list():
           _num = _num * int(i)
-        _num = min(_num, self._max_print)
+        if self.limit_print:
+          _num = min(_num, self._max_print)
         if self.record_all:
           bn = tf.Print(bn, [bn], message="batchnorm%d=" % self.counts['batchnorm'], first_n=self.first_n, summarize=_num)
         else:
@@ -545,7 +551,8 @@ class ConvNetBuilder(object):
       _num = 1
       for i in self.top_layer.shape.as_list():
         _num = _num * int(i)
-      _num = min(_num, self._max_print)
+      if self.limit_print:
+        _num = min(_num, self._max_print)
       if self.record_all:
         self.top_layer = tf.Print(self.top_layer, [self.top_layer], message="lrn%d=" % self.counts['lrn'], first_n=self.first_n, summarize=_num)
       else:
