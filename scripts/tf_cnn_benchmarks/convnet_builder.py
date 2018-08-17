@@ -55,6 +55,21 @@ class ConvNetBuilder(object):
     self.aux_top_layer = None
     self.aux_top_size = 0
 
+    # Add for tf.Print() params
+    self._max_print = 100
+    self.first_n = -1
+
+    # Add for record which tensor value
+    self.record_conv = True
+    self.record_pool = True
+    self.record_affine = True
+    self.record_dropout = True
+    self.record_batchnorm = True
+    self.record_lrn = True
+
+    # Add for record all layer's or the first of each layer
+    self.record_all = False
+
   def get_custom_getter(self):
     """Returns a custom getter that this class's methods must be called under.
 
@@ -155,9 +170,6 @@ class ConvNetBuilder(object):
            bias=0.0,
            kernel_initializer=None):
     """Construct a conv2d layer on top of cnn."""
-    # Add for tf.Print()
-    _max_print = 100
-    first_n = -1
     if input_layer is None:
       input_layer = self.top_layer
     if num_channels_in is None:
@@ -175,13 +187,6 @@ class ConvNetBuilder(object):
                                  kernel_size=[k_height, k_width],
                                  strides=[d_height, d_width], padding=mode,
                                  kernel_initializer=kernel_initializer)
-        # Add for tf.Print()
-        _num = 1
-        for i in conv.shape.as_list():
-          _num = _num * int(i)
-        _num = min(_num, _max_print)
-        if self.counts['conv'] == 1:
-          conv = tf.Print(conv, [conv], message="conv%d=" % self.counts['conv'], first_n=first_n, summarize=_num)
       else:  # Special padding mode for ResNet models
         if d_height == 1 and d_width == 1:
           conv = self._conv2d_impl(input_layer, num_channels_in,
@@ -189,13 +194,6 @@ class ConvNetBuilder(object):
                                    kernel_size=[k_height, k_width],
                                    strides=[d_height, d_width], padding='SAME',
                                    kernel_initializer=kernel_initializer)
-          # Add for tf.Print()
-          _num = 1
-          for i in conv.shape.as_list():
-            _num = _num * int(i)
-          _num = min(_num, _max_print)
-          if self.counts['conv'] == 1:
-            conv = tf.Print(conv, [conv], message="conv%d=" % self.counts['conv'], first_n=first_n, summarize=_num)
         else:
           rate = 1  # Unused (for 'a trous' convolutions)
           kernel_height_effective = k_height + (k_height - 1) * (rate - 1)
@@ -214,13 +212,18 @@ class ConvNetBuilder(object):
                                    kernel_size=[k_height, k_width],
                                    strides=[d_height, d_width], padding='VALID',
                                    kernel_initializer=kernel_initializer)
-          # Add for tf.Print()
-          _num = 1
-          for i in conv.shape.as_list():
-            _num = _num * int(i)
-          _num = min(_num, _max_print)
+      # Add for tf.Print()
+      if self.record_conv:
+        _num = 1
+        for i in conv.shape.as_list():
+          _num = _num * int(i)
+        _num = min(_num, self._max_print)
+        if self.record_all:
+          conv = tf.Print(conv, [conv], message="conv%d=" % self.counts['conv'], first_n=self.first_n, summarize=_num)
+        else:
+          # Record only the first conv
           if self.counts['conv'] == 1:
-            conv = tf.Print(conv, [conv], message="conv%d=" % self.counts['conv'], first_n=first_n, summarize=_num)
+            conv = tf.Print(conv, [conv], message="conv%d=" % self.counts['conv'], first_n=self.first_n, summarize=_num)
       if use_batch_norm is None:
         use_batch_norm = self.use_batch_norm
       if not use_batch_norm:
@@ -271,7 +274,7 @@ class ConvNetBuilder(object):
           input_layer, [k_height, k_width], [d_height, d_width],
           padding=mode,
           data_format=self.channel_pos,
-          name=name)
+          name=name)      
     else:
       if self.data_format == 'NHWC':
         ksize = [1, k_height, k_width, 1]
@@ -281,6 +284,18 @@ class ConvNetBuilder(object):
         strides = [1, 1, d_height, d_width]
       pool = tf.nn.max_pool(input_layer, ksize, strides, padding=mode,
                             data_format=self.data_format, name=name)
+
+    if self.record_pool:
+      _num = 1
+      for i in pool.shape.as_list():
+        _num = _num * int(i)
+      _num = min(_num, self._max_print)
+      if self.record_all:
+        pool = tf.Print(pool, [pool], message="%s%d=" % (pool_name, self.counts[pool_name]), first_n=self.first_n, summarize=_num)
+      else:
+        # Record only the first pool
+        if self.counts[pool_name] == 1:
+          pool = tf.Print(pool, [pool], message="%s%d=" % (pool_name, self.counts[pool_name]), first_n=self.first_n, summarize=_num)
     self.top_layer = pool
     return pool
 
@@ -340,6 +355,19 @@ class ConvNetBuilder(object):
                                  self.variable_dtype, self.dtype,
                                  initializer=tf.constant_initializer(bias))
       logits = tf.nn.xw_plus_b(input_layer, kernel, biases)
+
+      if self.record_affine:
+        _num = 1
+        for i in logits.shape.as_list():
+          _num = _num * int(i)
+        _num = min(_num, self._max_print)
+        if self.record_all:
+          logits = tf.Print(logits, [logits], message="affine%d=" % self.counts['affine'], first_n=self.first_n, summarize=_num)
+        else:
+          # Record only the first affine
+          if self.counts['affine'] == 1:
+            logits = tf.Print(logits, [logits], message="affine%d=" % self.counts['affine'], first_n=self.first_n, summarize=_num)
+
       if activation == 'relu':
         affine1 = tf.nn.relu(logits, name=name)
       elif activation == 'linear' or activation is None:
@@ -409,6 +437,18 @@ class ConvNetBuilder(object):
         dropout = core_layers.dropout(input_layer, 1. - keep_prob)
       else:
         dropout = tf.nn.dropout(input_layer, keep_prob)
+
+      if self.record_dropout:
+        _num = 1
+        for i in dropout.shape.as_list():
+          _num = _num * int(i)
+        _num = min(_num, self._max_print)
+        if self.record_all:
+          dropout = tf.Print(dropout, [dropout], message="dropout%d=" % self.counts['dropout'], first_n=self.first_n, summarize=_num)
+        else:
+          # Record only the first dropout
+          if self.counts['dropout'] == 1:
+            dropout = tf.Print(dropout, [dropout], message="dropout%d=" % self.counts['dropout'], first_n=self.first_n, summarize=_num)
       self.top_layer = dropout
       return dropout
 
@@ -477,6 +517,18 @@ class ConvNetBuilder(object):
             scope=scope)
       else:
         bn = self._batch_norm_without_layers(input_layer, decay, scale, epsilon)
+
+      if self.record_batchnorm:
+        _num = 1
+        for i in bn.shape.as_list():
+          _num = _num * int(i)
+        _num = min(_num, self._max_print)
+        if self.record_all:
+          bn = tf.Print(bn, [bn], message="batchnorm%d=" % self.counts['batchnorm'], first_n=self.first_n, summarize=_num)
+        else:
+          # Record only the first bn
+          if self.counts['batchnorm'] == 1:
+            bn = tf.Print(bn, [bn], message="batchnorm%d=" % self.counts['batchnorm'], first_n=self.first_n, summarize=_num)
     self.top_layer = bn
     self.top_size = bn.shape[3] if self.data_format == 'NHWC' else bn.shape[1]
     self.top_size = int(self.top_size)
@@ -488,4 +540,16 @@ class ConvNetBuilder(object):
     self.counts['lrn'] += 1
     self.top_layer = tf.nn.lrn(
         self.top_layer, depth_radius, bias, alpha, beta, name=name)
+
+    if self.record_lrn:
+      _num = 1
+      for i in self.top_layer.shape.as_list():
+        _num = _num * int(i)
+      _num = min(_num, self._max_print)
+      if self.record_all:
+        self.top_layer = tf.Print(self.top_layer, [self.top_layer], message="lrn%d=" % self.counts['lrn'], first_n=self.first_n, summarize=_num)
+      else:
+        # Record only the first lrn
+        if self.counts['batchnorm'] == 1:
+          self.top_layer = tf.Print(self.top_layer, [self.top_layer], message="batchnorm%d=" % self.counts['lrn'], first_n=self.first_n, summarize=_num)
     return self.top_layer
