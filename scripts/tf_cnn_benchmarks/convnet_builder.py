@@ -155,6 +155,9 @@ class ConvNetBuilder(object):
            bias=0.0,
            kernel_initializer=None):
     """Construct a conv2d layer on top of cnn."""
+    # Add for tf.Print()
+    _max_print = 100
+    first_n = -1
     if input_layer is None:
       input_layer = self.top_layer
     if num_channels_in is None:
@@ -176,8 +179,9 @@ class ConvNetBuilder(object):
         _num = 1
         for i in conv.shape.as_list():
           _num = _num * int(i)
+        _num = min(_num, _max_print)
         if self.counts['conv'] == 1:
-          conv = tf.Print(conv, [conv], message="conv%d=" % self.counts['conv'], summarize=_num)
+          conv = tf.Print(conv, [conv], message="conv%d=" % self.counts['conv'], first_n=first_n, summarize=_num)
       else:  # Special padding mode for ResNet models
         if d_height == 1 and d_width == 1:
           conv = self._conv2d_impl(input_layer, num_channels_in,
@@ -189,8 +193,9 @@ class ConvNetBuilder(object):
           _num = 1
           for i in conv.shape.as_list():
             _num = _num * int(i)
+          _num = min(_num, _max_print)
           if self.counts['conv'] == 1:
-            conv = tf.Print(conv, [conv], message="conv%d=" % self.counts['conv'], summarize=_num)
+            conv = tf.Print(conv, [conv], message="conv%d=" % self.counts['conv'], first_n=first_n, summarize=_num)
         else:
           rate = 1  # Unused (for 'a trous' convolutions)
           kernel_height_effective = k_height + (k_height - 1) * (rate - 1)
@@ -213,8 +218,9 @@ class ConvNetBuilder(object):
           _num = 1
           for i in conv.shape.as_list():
             _num = _num * int(i)
+          _num = min(_num, _max_print)
           if self.counts['conv'] == 1:
-            conv = tf.Print(conv, [conv], message="conv%d=" % self.counts['conv'], summarize=_num)
+            conv = tf.Print(conv, [conv], message="conv%d=" % self.counts['conv'], first_n=first_n, summarize=_num)
       if use_batch_norm is None:
         use_batch_norm = self.use_batch_norm
       if not use_batch_norm:
