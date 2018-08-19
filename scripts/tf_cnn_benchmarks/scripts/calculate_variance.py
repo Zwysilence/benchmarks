@@ -21,6 +21,19 @@ class ProcessFile():
 
     return max_variance
 
+  def extract_value(self, tmp_value, dest):
+    for v in tmp_value:
+      if '[' in v:
+        v = v.split('[')
+        for vv in v:
+          if vv == '':
+            pass
+          else:
+            vv = vv.split('[]')
+            dest.append(float(vv))
+      else:
+        dest.append(float(vv))
+
 
   def process_file(self, in_p, out_dir=None):
     lines = in_p.readlines()
@@ -46,11 +59,22 @@ class ProcessFile():
 
         if self.counts[layer_name] == 1:
           self.prev_value[layer_name] = []
-          for v in tmp_value:
-            self.prev_value[layer_name].append(float(v))
+          self.extract_value(tmp_value, self.prev_value[layer_name])
+          # for v in tmp_value:
+          #   if '[' in v:
+          #     v = v.split('[')
+          #     for vv in v:
+          #       if vv = '':
+          #         pass
+          #       else:
+          #         vv = vv.split('[]')
+          #         self.prev_value[layer_name].append(float(vv))
+          #   else:
+          #     self.prev_value[layer_name].append(float(v))
         else:
-          for v in tmp_value:
-            curr_value.append(float(v))
+          self.extract_value(tmp_value, curr_value)
+          # for v in tmp_value:
+          #   curr_value.append(float(v))
 
           variance = self.calculate_variance(self.prev_value[layer_name], curr_value)
           self.prev_value[layer_name] = []

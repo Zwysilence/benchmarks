@@ -6,7 +6,7 @@ mkdir -p $log_dir
 
 models="inception3"
 # models="vgg16 inception3 resnet50 resnet152"
-batch_sizes="114 115"
+batch_sizes="32"
 memory_optimizers="NO_MEM_OPT SWAPPING_HEURISTICS RECOMPUTATION_HEURISTICS"
 # memory_optimizers="NO_MEM_OPT SWAPPING_HEURISTICS RECOMPUTATION_HEURISTICS SCHEDULING_HEURISTICS HEURISTICS"
 num_batches="50"
