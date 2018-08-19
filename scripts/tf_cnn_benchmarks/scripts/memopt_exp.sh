@@ -1,13 +1,13 @@
 #!/bin/bash
-source ~/v-xuapen/tensorflow1.8.0/bin/activate
+#source ~/v-xuapen/tensorflow1.8.0/bin/activate
 
-log_dir="/vpublic01/frog/v-xuapen/benchmarks/scripts/tf_cnn_benchmarks/scripts/mem_log/"
+log_dir="/home/uniquesc/v-xuapen/benchmarks/scripts/tf_cnn_benchmarks/scripts/mem_log/"
 mkdir -p $log_dir
 
-models="inception3"
-# models="vgg16 inception3 resnet50 resnet152"
+#models="inception3"
+models="vgg16 inception3 inception4 resnet50 resnet152"
 batch_sizes="32"
-memory_optimizers="NO_MEM_OPT SWAPPING_HEURISTICS RECOMPUTATION_HEURISTICS"
+memory_optimizers="NO_MEM_OPT"
 # memory_optimizers="NO_MEM_OPT SWAPPING_HEURISTICS RECOMPUTATION_HEURISTICS SCHEDULING_HEURISTICS HEURISTICS"
 num_batches="50"
 cuda_devices="0"
