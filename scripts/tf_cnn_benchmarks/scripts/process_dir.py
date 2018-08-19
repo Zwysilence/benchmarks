@@ -3,7 +3,8 @@ from calculate_variance import ProcessFile
 
 filepath="/vpublic01/frog/v-xuapen/benchmarks/scripts/tf_cnn_benchmarks/scripts/mem_log/"
 out_filepath=filepath+'result/'
-os.mkdir(out_filepath)
+if not os.path.exists(out_filepath):
+  os.mkdir(out_filepath)
 
 def process_dir(path):
   files = os.listdir(path)

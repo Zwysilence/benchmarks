@@ -9,17 +9,31 @@ class ProcessFile():
     self.all_layers = ['conv', 'pool', 'affine','dropout', 'batchnorm', 'lrn']
 
 
-  def calculate_variance(self, prev, curr):
+  def calculate_max_variance(self, prev, curr):
     # assert(len(prev) == self.total_length)
     # assert(len(curr) == self.total_length)
 
     max_variance = 0
-    for i in range(self.total_length):
+    length = len(prev)
+    for i in range(length):
       v = abs(curr[i] - prev[i])
       if v > max_variance:
         max_variance = v
 
     return max_variance
+
+  def calculate_all_variance(self, prev, curr):
+    # assert(len(prev) == self.total_length)
+    # assert(len(curr) == self.total_length)
+
+    variance = []
+    length = len(prev)
+    for i in range(length):
+      v = curr[i] - prev[i]
+      variance.append(v)
+      
+    return variance
+
 
   def extract_value(self, tmp_value, dest):
     for v in tmp_value:
@@ -29,10 +43,10 @@ class ProcessFile():
           if vv == '':
             pass
           else:
-            vv = vv.split('[]')
+            vv = vv.strip('[]')
             dest.append(float(vv))
       else:
-        dest.append(float(vv))
+        dest.append(float(v))
 
 
   def process_file(self, in_p, out_dir=None):
@@ -42,7 +56,8 @@ class ProcessFile():
       flag = False
       for l in self.all_layers:
         if l in line:
-          flag = True
+          if 'images/sec' not in line:  # HACK for the last line
+            flag = True
 
       if flag:
         curr_value = []
@@ -60,30 +75,20 @@ class ProcessFile():
         if self.counts[layer_name] == 1:
           self.prev_value[layer_name] = []
           self.extract_value(tmp_value, self.prev_value[layer_name])
-          # for v in tmp_value:
-          #   if '[' in v:
-          #     v = v.split('[')
-          #     for vv in v:
-          #       if vv = '':
-          #         pass
-          #       else:
-          #         vv = vv.split('[]')
-          #         self.prev_value[layer_name].append(float(vv))
-          #   else:
-          #     self.prev_value[layer_name].append(float(v))
+
         else:
           self.extract_value(tmp_value, curr_value)
-          # for v in tmp_value:
-          #   curr_value.append(float(v))
 
-          variance = self.calculate_variance(self.prev_value[layer_name], curr_value)
+          variance = self.calculate_all_variance(self.prev_value[layer_name], curr_value)
           self.prev_value[layer_name] = []
           self.prev_value[layer_name].extend(curr_value)
           if out_dir:
-            with open(out_dir+layer_name+'.txt', 'a') as out_p:
-              out_p.write(str(variance) + '\n')
+            with open(out_dir+layer_name+'_'+str(self.counts[layer_name]-1)+'.txt', 'a') as out_p:
+              for v in variance:
+                out_p.write(str(v) + '\n')
           else:
-            print("[%s] The max variance between %d and %d is %f" % (layer_name, self.counts[layer_name] - 1, self.counts[layer_name], variance))
+            pass
+            # print("[%s] The max variance between %d and %d is %f" % (layer_name, self.counts[layer_name] - 1, self.counts[layer_name], variance))
 
     in_p.close()
 
