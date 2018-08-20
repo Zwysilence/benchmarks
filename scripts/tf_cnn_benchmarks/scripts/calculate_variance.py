@@ -1,38 +1,39 @@
 import sys
 import os
 
+# Process the metalog file
 class ProcessFile():
   def __init__(self):
-    self.total_length = 100
+    # self.total_length = 100
     self.counts = dict()
     self.prev_value = dict()
     self.all_layers = ['conv', 'pool', 'affine','dropout', 'batchnorm', 'lrn']
 
 
-  def calculate_max_variance(self, prev, curr):
+  def calculate_max_variation(self, prev, curr):
     # assert(len(prev) == self.total_length)
     # assert(len(curr) == self.total_length)
 
-    max_variance = 0
+    max_variation = 0
     length = len(prev)
     for i in range(length):
       v = abs(curr[i] - prev[i])
-      if v > max_variance:
-        max_variance = v
+      if v > max_variation:
+        max_variation = v
 
-    return max_variance
+    return max_variation
 
-  def calculate_all_variance(self, prev, curr):
+  def calculate_all_variation(self, prev, curr):
     # assert(len(prev) == self.total_length)
     # assert(len(curr) == self.total_length)
 
-    variance = []
+    variation = []
     length = len(prev)
     for i in range(length):
       v = curr[i] - prev[i]
-      variance.append(v)
+      variation.append(v)
       
-    return variance
+    return variation
 
 
   def extract_value(self, tmp_value, dest):
@@ -48,8 +49,21 @@ class ProcessFile():
       else:
         dest.append(float(v))
 
+  def process_max(self, in_p, out_dir=None):
+    return self.process_file(in_p=in_p,
+                             func=self.calculate_max_variation,
+                             out_dir=out_dir)
 
-  def process_file(self, in_p, out_dir=None):
+  def process_all(self, in_p, out_dir=None):
+    return self.process_file(in_p=in_p,
+                             func=self.calculate_all_variation,
+                             out_dir=out_dir)
+
+  def process_file(self,
+                   in_p,
+                   func,
+                   out_dir=None
+                   ):
     lines = in_p.readlines()
 
     for line in lines:
@@ -79,16 +93,20 @@ class ProcessFile():
         else:
           self.extract_value(tmp_value, curr_value)
 
-          variance = self.calculate_all_variance(self.prev_value[layer_name], curr_value)
+          variation = func(self.prev_value[layer_name], curr_value)
           self.prev_value[layer_name] = []
           self.prev_value[layer_name].extend(curr_value)
           if out_dir:
-            with open(out_dir+layer_name+'_'+str(self.counts[layer_name]-1)+'.txt', 'a') as out_p:
-              for v in variance:
-                out_p.write(str(v) + '\n')
+            if isinstance(variation, float):
+              with open(out_dir+layer_name+'.txt', 'a') as out_p:
+                out_p.write(str(variation) + '\n')
+            elif isinstance(variation, list):
+              with open(out_dir+layer_name+'_'+str(self.counts[layer_name]-1)+'.txt', 'a') as out_p:
+                for v in variation:
+                 out_p.write(str(v) + '\n')
           else:
             pass
-            # print("[%s] The max variance between %d and %d is %f" % (layer_name, self.counts[layer_name] - 1, self.counts[layer_name], variance))
+            # print("[%s] The max variation between %d and %d is %f" % (layer_name, self.counts[layer_name] - 1, self.counts[layer_name], variance))
 
     in_p.close()
 
