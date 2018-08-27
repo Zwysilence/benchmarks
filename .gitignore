@@ -1,4 +1,5 @@
 .vscode/
 *.pyc
 *.sh
+scripts/tf_cnn_benchmarks/scripts/**
 scripts/tf_cnn_benchmarks/scripts/mem_log*/
