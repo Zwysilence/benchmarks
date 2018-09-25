@@ -61,15 +61,15 @@ class ConvNetBuilder(object):
     self.first_n = -1
 
     # Add for record which tensor value
-    self.record_conv = True
-    self.record_pool = True
-    self.record_affine = True
-    self.record_dropout = True
-    self.record_batchnorm = True
-    self.record_lrn = True
+    self.record_conv = False
+    self.record_pool = False
+    self.record_affine = False
+    self.record_dropout = False
+    self.record_batchnorm = False
+    self.record_lrn = False
 
     # Add for record all layer's or the first of each layer
-    self.record_all = True
+    self.record_all = False
 
   def get_custom_getter(self):
     """Returns a custom getter that this class's methods must be called under.

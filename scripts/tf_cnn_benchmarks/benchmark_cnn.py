@@ -55,6 +55,7 @@ from models import model_config
 from platforms import util as platforms_util
 
 import mem_util
+import node_time_util
 
 
 _DEFAULT_NUM_BATCHES = 100
@@ -698,6 +699,7 @@ def benchmark_one_step(sess,
     log_fn(log_str)
 
   if step == _NUM_STEPS_TO_PROFILE - 1:
+    node_time_util.get_node_time(run_metadata)
     GigaConv = 1 << 30
     peak_memory_usage = float(mem_util.peak_memory(run_metadata)["/gpu:0"]) / GigaConv
     log_str = 'Peak memory usage is %f GB' % peak_memory_usage
