@@ -1,6 +1,7 @@
 import os
 
 from node import Node
+from tensor import Tensor
 
 
 def _simplify_device_name(device):
@@ -18,6 +19,10 @@ def _simplify_device_name(device):
   #   device = 
   if '/' in device:
     device = '_'.join(device.split('/'))
+
+  if ':' in device:
+    device = '_'.join(device.split(':'))
+
   return device.lower()
 
 def get_node_time(run_metadata):
@@ -35,8 +40,10 @@ def get_node_time(run_metadata):
     #   continue
     extractNodeTime(device_name, dev_stat.node_stats)
 
+  
 def extractNodeTime(device_name, nodestats):
   # 
+  # assert hasattr(nodestats, 'referenced_tensor')
   nodes = []
   out_dir = './graph/'
 
@@ -53,6 +60,19 @@ def extractNodeTime(device_name, nodestats):
       minimum_start_time = all_start_micros
 
     d_node = Node(node_name, all_start_micros, all_end_rel_micros)
+
+    for ref_tensor in node.referenced_tensor:
+      tid = ref_tensor.allocation_id
+      allocator_name = ref_tensor.allocator_name
+      requested_bytes = ref_tensor.requested_bytes
+      allocated_bytes = ref_tensor.allocated_bytes
+
+      t = Tensor(d_node.node_name, tid=tid, 
+                 requested_bytes=requested_bytes,
+                 allocator_name=allocator_name,
+                 allocated_bytes=allocated_bytes)
+      d_node.ref_tensors.append(t)
+
     nodes.append(d_node)
 
   with open('%s%s.txt' % (out_dir, device_name), 'w') as fout:
@@ -61,3 +81,10 @@ def extractNodeTime(device_name, nodestats):
       node.start_time -= minimum_start_time
       node.end_time += node.start_time
       fout.write(node.node_name+' '+str(node.start_time)+' '+str(node.end_time)+'\n')
+
+  with open("%s%s_refTensor.txt" % (out_dir, device_name), 'w') as fout:
+    for node in nodes:
+      fout.write(node.node_name+' ')
+      for ref_tensor in node.ref_tensors:
+        fout.write(str(ref_tensor.tid)+' ')
+      fout.write('\n')

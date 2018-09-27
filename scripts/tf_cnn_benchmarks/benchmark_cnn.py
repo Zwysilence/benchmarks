@@ -473,6 +473,9 @@ flags.DEFINE_string('result_storage', None,
 flags.DEFINE_string('metadata_log', None,
                     'Dump metadata to file.')
 
+flags.DEFINE_boolean('lognode_time', False,
+                    'whether to log node execution time')
+
 # flags.DEFINE_boolean("")
 
 
@@ -604,7 +607,7 @@ def create_config_proto(params):
   if params.memory_optimization == "NO_MEM_OPT":
     print("[benchmark_cnn]: Use NO_MEM_OPT")
     config.graph_options.rewrite_options.memory_optimization = (
-        rewriter_config_pb2.RewriterConfig.NO_MEM_OPT) 
+        rewriter_config_pb2.RewriterConfig.NO_MEM_OPT)
   if params.rewriter_config:
     rewriter_config = rewriter_config_pb2.RewriterConfig()
     text_format.Merge(params.rewriter_config, rewriter_config)
@@ -682,7 +685,7 @@ def benchmark_one_step(sess,
   if not params.forward_only:
     lossval = results['average_loss']
   else:
-    lossval = 0.  
+    lossval = 0.
   if image_producer is not None:
     image_producer.notify_image_consumption()
   train_time = time.time() - start_time
@@ -699,7 +702,8 @@ def benchmark_one_step(sess,
     log_fn(log_str)
 
   if step == _NUM_STEPS_TO_PROFILE - 1:
-    node_time_util.get_node_time(run_metadata)
+    if params.lognode_time:
+      node_time_util.get_node_time(run_metadata)
     GigaConv = 1 << 30
     peak_memory_usage = float(mem_util.peak_memory(run_metadata)["/gpu:0"]) / GigaConv
     log_str = 'Peak memory usage is %f GB' % peak_memory_usage
