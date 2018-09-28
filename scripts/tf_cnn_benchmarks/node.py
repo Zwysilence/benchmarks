@@ -15,6 +15,8 @@ class Node():
 
     self.ref_tensors = []
 
+    self.outputs = []
+
     self.pending_count = -1
     self.fanout_nodes = []
 

@@ -38,7 +38,8 @@ def get_node_time(run_metadata):
     # Ignore the node in CPU
     # if 'cpu' in device_name:
     #   continue
-    extractNodeTime(device_name, dev_stat.node_stats)
+    if device_name == 'gpu_0':
+      extractNodeTime(device_name, dev_stat.node_stats)
 
   
 def extractNodeTime(device_name, nodestats):
@@ -61,17 +62,36 @@ def extractNodeTime(device_name, nodestats):
 
     d_node = Node(node_name, all_start_micros, all_end_rel_micros)
 
-    for ref_tensor in node.referenced_tensor:
-      tid = ref_tensor.allocation_id
-      allocator_name = ref_tensor.allocator_name
-      requested_bytes = ref_tensor.requested_bytes
-      allocated_bytes = ref_tensor.allocated_bytes
+    # for ref_tensor in node.referenced_tensor:
+    #   tid = ref_tensor.allocation_id
+    #   allocator_name = ref_tensor.allocator_name
+    #   requested_bytes = ref_tensor.requested_bytes
+    #   allocated_bytes = ref_tensor.allocated_bytes
 
-      t = Tensor(d_node.node_name, tid=tid, 
+    #   t = Tensor(d_node.node_name, tid=tid, 
+    #              requested_bytes=requested_bytes,
+    #              allocator_name=allocator_name,
+    #              allocated_bytes=allocated_bytes)
+    #   d_node.ref_tensors.append(t)
+
+    for i in node.output:
+      i_slot = i.slot
+      td= i.tensor_description
+
+      dtype = td.dtype
+      dshape = td.shape
+      allocation_d = td.allocation_description
+
+      requested_bytes = allocation_d.requested_bytes
+      allocated_bytes = allocation_d.allocated_bytes
+      allocator_name = allocation_d.allocator_name
+
+      t = Tensor(d_node.node_name, tid=i_slot, dtype=dtype, 
                  requested_bytes=requested_bytes,
                  allocator_name=allocator_name,
                  allocated_bytes=allocated_bytes)
-      d_node.ref_tensors.append(t)
+
+      d_node.outputs.append(t)
 
     nodes.append(d_node)
 
@@ -82,9 +102,11 @@ def extractNodeTime(device_name, nodestats):
       node.end_time += node.start_time
       fout.write(node.node_name+' '+str(node.start_time)+' '+str(node.end_time)+'\n')
 
-  with open("%s%s_refTensor.txt" % (out_dir, device_name), 'w') as fout:
+  with open("%s%s_outputs.txt" % (out_dir, device_name), 'w') as fout:
     for node in nodes:
       fout.write(node.node_name+' ')
-      for ref_tensor in node.ref_tensors:
-        fout.write(str(ref_tensor.tid)+' ')
+      for output in node.outputs:
+        fout.write(str(output.dtype)+' '+str(output.tid)+' ')
+      # for ref_tensor in node.ref_tensors:
+      #   fout.write(str(ref_tensor.tid)+' ')
       fout.write('\n')
