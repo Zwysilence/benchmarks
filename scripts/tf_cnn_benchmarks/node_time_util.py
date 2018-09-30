@@ -104,11 +104,14 @@ def extractNodeTime(device_name, nodestats):
 
   with open("%s%s_outputs.txt" % (out_dir, device_name), 'w') as fout:
     for node in nodes:
-      fout.write("SrcNode"+' '+node.node_name+'\n')
+      output_num = len(node.outputs)
+      fout.write("SrcNode"+' '+node.node_name+' '+str(output_num)+'\n')
       for output in node.outputs:
         fout.write("Output"+' '+str(output.tid)+' '+
-                   str(output.requested_bytes)+' '+str(output.allocated_bytes)+'\n')
+                   str(output.requested_bytes)+' '+
+                   str(output.allocated_bytes)+' '+
+                   str(output.allocator_name)+'\n')
         # fout.write(str(output.dtype)+' '+str(output.tid)+' ')
       # for ref_tensor in node.ref_tensors:
       #   fout.write(str(ref_tensor.tid)+' ')
-      fout.write('\n')
+      # fout.write('\n')
