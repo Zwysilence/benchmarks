@@ -668,10 +668,15 @@ def benchmark_one_step(sess,
     if partitioned_graph_file_prefix and step == -2:
       run_options.output_partition_graphs = True
     run_metadata = tf.RunMetadata()
-  # elif step == _NUM_STEPS_TO_PROFILE - 1:
-  #   run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
-  #   run_metadata = tf.RunMetadata()
-  else:
+  # Profile node execution stat in the specific step
+  elif step == _NUM_STEPS_TO_PROFILE - 1:
+    if params.lognode_time:
+      run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
+      run_metadata = tf.RunMetadata()
+    else:
+      run_options = None
+      run_metadata = None
+  else:    
     run_options = None
     run_metadata = None
   summary_str = None
@@ -701,13 +706,13 @@ def benchmark_one_step(sess,
           LOSS_AND_ACCURACY_DIGITS_TO_SHOW, results['top_5_accuracy'])
     log_fn(log_str)
 
-  # if step == _NUM_STEPS_TO_PROFILE - 1:
-  #   if params.lognode_time:
-  #     node_time_util.get_node_time(run_metadata)
-  #   GigaConv = 1 << 30
-  #   peak_memory_usage = float(mem_util.peak_memory(run_metadata)["/gpu:0"]) / GigaConv
-  #   log_str = 'Peak memory usage is %f GB' % peak_memory_usage
-  #   log_fn(log_str)
+  if step == _NUM_STEPS_TO_PROFILE - 1:
+    if params.lognode_time:
+      node_time_util.get_node_time(run_metadata)
+    # GigaConv = 1 << 30
+    # peak_memory_usage = float(mem_util.peak_memory(run_metadata)["/gpu:0"]) / GigaConv
+    # log_str = 'Peak memory usage is %f GB' % peak_memory_usage
+    # log_fn(log_str)
   if need_options_and_metadata:
     # if step == _NUM_STEPS_TO_PROFILE - 1:
     #   GigaConv = 1 << 30
