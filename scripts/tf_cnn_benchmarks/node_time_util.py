@@ -76,7 +76,7 @@ def extractNodeTime(device_name, nodestats):
 
     for i in node.output:
       i_slot = i.slot
-      td= i.tensor_description
+      td = i.tensor_description
 
       # dtype = td.dtype
       # dshape = td.shape
@@ -89,11 +89,19 @@ def extractNodeTime(device_name, nodestats):
       t = Tensor(d_node.node_name, tid=i_slot,
                  requested_bytes=requested_bytes,
                  allocator_name=allocator_name,
-                 allocated_bytes=allocated_bytes)
+                 allocated_bytes=allocated_bytes,
+                 allocated_time=all_start_micros)
 
       d_node.outputs.append(t)
 
     nodes.append(d_node)
+
+  metadata_log = False
+  if metadata_log:
+    with open("%s%s_nodetime_metadata.txt" % (out_dir, device_name), 'w') as fout:
+      for node in nodes:
+        fout.write(node.node_name+' '+str(node.start_time)+' '+str(node.end_time)+'\n')
+
 
   with open('%s%s_nodetime.txt' % (out_dir, device_name), 'w') as fout:
     for node in nodes:
@@ -109,8 +117,9 @@ def extractNodeTime(device_name, nodestats):
       for output in node.outputs:
         fout.write("Output"+' '+str(output.tid)+' '+
                    str(output.requested_bytes)+' '+
-                   str(output.allocated_bytes)+' '+
-                   str(output.allocator_name)+'\n')
+                   str(output.allocated_bytes)+' '+                   
+                   str(output.allocator_name)+' '+
+                   str(output.allocated_time)+'\n')
         # fout.write(str(output.dtype)+' '+str(output.tid)+' ')
       # for ref_tensor in node.ref_tensors:
       #   fout.write(str(ref_tensor.tid)+' ')
