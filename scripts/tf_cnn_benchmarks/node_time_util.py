@@ -151,15 +151,3 @@ def PrintResult():
 
     # nodes.append(d_node)
 
-  metadata_log = False
-  if metadata_log:
-    with open("%s%s_nodetime_metadata.txt" % (out_dir, device_name), 'w') as fout:
-      for node in nodes:
-        fout.write(node.node_name+' '+str(node.start_time)+' '+str(node.end_time)+'\n')
-
-
-  
-        # fout.write(str(output.dtype)+' '+str(output.tid)+' ')
-      # for ref_tensor in node.ref_tensors:
-      #   fout.write(str(ref_tensor.tid)+' ')
-      # fout.write('\n')
