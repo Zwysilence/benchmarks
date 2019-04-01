@@ -3,7 +3,8 @@ import os
 from node import Node
 from tensor import Tensor
 
-nodes = dict()
+gpu_nodes = dict()
+cpu_nodes = dict()
 out_dir = './graph/'
 
 def _simplify_device_name(device):
@@ -48,23 +49,30 @@ def get_node_time(run_metadata):
       extractNodeTime(device_name, dev_stat.node_stats)
     
     if device_name == 'gpu_0':
-      assert len(nodes) > 0
+      # assert len(nodes) > 0
       extractNodeTime(device_name, dev_stat.node_stats)
       extractTensor(device_name, dev_stat.node_stats)
+
+  gpu_nodes_name = set(gpu_nodes.keys())
+  cpu_nodes_name = set(cpu_nodes.keys())
+  intersect_node_name = list(gpu_nodes_name.intersection(cpu_nodes_name))
+
+  if len(intersect_node_name) != 0:
+    print("Intersection not empty!")
+    print(str(intersect_node_name))
 
   PrintResult()
 
 def extractTensor(device_name, nodestats):
   for node_stat in nodestats:
     node_name = node_stat.node_name
-    try:
-      assert nodes.__contains__(node_name)
-    except AssertionError:
+    if gpu_nodes.__contains__(node_name):
+      gpu_nodes[node_name].InitOutput(node_stat)
+    elif cpu_nodes.__contains__(node_name):
+      cpu_nodes[node_name].InitOutput(node_stat)
+    else:
       print("Error tensor: %s" % node_name)
-      # exit(1)
-      continue
-    nodes[node_name].InitOutput(node_stat)
-  
+        
 def extractNodeTime(device_name, nodestats):
   # 
   # assert hasattr(nodestats, 'referenced_tensor')
@@ -73,30 +81,76 @@ def extractNodeTime(device_name, nodestats):
   if not os.path.exists(out_dir):
     os.mkdir(out_dir)
 
+  gpu_flag = False
+  if device_name == 'gpu_0_stream_all':
+    gpu_flag = True
+
+  # fout1 = open("%s%s_meta.txt" % (out_dir, device_name), 'w')
+  
   for node_stat in nodestats:
     node_name = node_stat.node_name
     if ':' in node_name:
       node_name = node_name.split(':')[0]
-    if device_name == 'gpu_0':
-      if nodes.__contains__(node_name):
+    if gpu_flag:
+      if not gpu_nodes.__contains__(node_name):
+        gpu_nodes[node_name] = Node(node_name)
+      gpu_nodes[node_name].AddTime(node_stat)
+    else:
+      if gpu_nodes.__contains__(node_name):
         continue
-    if not nodes.__contains__(node_name):
-      nodes[node_name] = Node(node_name)
-    nodes[node_name].AddTime(node_stat)
+      if not cpu_nodes.__contains__(node_name):
+        cpu_nodes[node_name] = Node(node_name)
+      cpu_nodes[node_name].AddTime(node_stat)
+    # if device_name == 'gpu_0':
+    #   if nodes.__contains__(node_name):
+    #     all_start_micros = node_stat.all_start_micros
+    #     # fout1.write(node_name+' '+str(all_start_micros)+'\n')
+    #     continue
+    # if not nodes.__contains__(node_name):
+    #   # if device_name == 'gpu_0':
+    #   #   print("gpu_0 node: "+node_name)
+    #   # else:
+    #   #   print("stream_all: "+node_name)
+    #   nodes[node_name] = Node(node_name)
+    # nodes[node_name].AddTime(node_stat)
+
+  # fout1.close()
+    
 
 def PrintResult():
-  all_start_time = [node.start_time for node in nodes.values()]
+  gpu_all_start_time = [node.start_time for node in gpu_nodes.values()]
+  cpu_all_start_time = [node.start_time for node in cpu_nodes.values()]
+  print("Min GPU all start time: %d" % min(gpu_all_start_time))
+  print("Min CPU all start time: %d" % min(cpu_all_start_time))
+  all_start_time = gpu_all_start_time+cpu_all_start_time
   min_start_time = min(all_start_time)
 
+  with open('%s%s_nodetime.txt' % (out_dir, 'gpu_0_stream_all'), 'w') as fout:
+    for node in gpu_nodes.values():
+      assert (node.start_time >= min_start_time)
+      node.start_rel_time = node.start_time - min_start_time
+      node.end_time = node.start_rel_time + node.exec_time
+      fout.write(node.node_name+' '+str(node.start_rel_time)+' '+str(node.end_time)+'\n')
+
   with open('%s%s_nodetime.txt' % (out_dir, 'gpu_0'), 'w') as fout:
-    for node in nodes.values():
+    for node in cpu_nodes.values():
       assert (node.start_time >= min_start_time)
       node.start_rel_time = node.start_time - min_start_time
       node.end_time = node.start_rel_time + node.exec_time
       fout.write(node.node_name+' '+str(node.start_rel_time)+' '+str(node.end_time)+'\n')
 
   with open("%s%s_outputs.txt" % (out_dir, 'gpu_0'), 'w') as fout:
-    for node in nodes.values():
+    for node in gpu_nodes.values():
+      output_num = len(node.outputs)
+      fout.write("SrcNode"+' '+node.node_name+' '+str(output_num)+'\n')
+      for output in node.outputs.values():
+        fout.write("Output"+' '+str(output.tid)+' '+
+                   str(output.requested_bytes)+' '+
+                   str(output.allocated_bytes)+' '+                   
+                   str(output.allocator_name)+' '+
+                   str(output.allocated_time)+'\n')
+
+    for node in cpu_nodes.values():
       output_num = len(node.outputs)
       fout.write("SrcNode"+' '+node.node_name+' '+str(output_num)+'\n')
       for output in node.outputs.values():
