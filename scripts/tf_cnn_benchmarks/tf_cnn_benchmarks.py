@@ -30,6 +30,9 @@ from __future__ import print_function
 from absl import app
 from absl import flags as absl_flags
 import tensorflow as tf
+# import memory_saving_gradients
+# monkey patch tf.gradients to point to our custom version, with automatic checkpoint selection
+# tf.__dict__["gradients"] = memory_saving_gradients.gradients_speed
 
 import benchmark_cnn
 import cnn_util
